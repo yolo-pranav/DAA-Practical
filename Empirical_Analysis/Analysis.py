@@ -2,9 +2,10 @@ import os
 import csv
 import random
 from time import time
+import pandas as pd
 from types import FunctionType
 import matplotlib.pyplot as plt
-from Empirical_Analysis.Sorting import quick_sort
+from Sorting import quick_sort
 
 NAME = 'name'
 CSVHEADER = 'csvHeader'
@@ -19,18 +20,17 @@ class Analysis:
         self._funcTypeDict = {
             0: {
                 NAME: lambda: 'Sorting',
-                CSVHEADER: lambda: ['Run', 'Input Size', 'TIme of Execution'],
+                CSVHEADER: lambda: ['Run', 'Input Size', 'TIme of Execution (s)'],
                 ARGS: lambda: [self._testCase],
                 CSVAPPEND: lambda: [self._timeArray[0]]
             },
             1: {
                 NAME: lambda: 'Searching',
-                CSVHEADER: lambda: ['Run', 'Input Size', 'TIme of Execution (Average)', 'TIme of Execution (Best)', 'TIme of Execution (Worst)'],
+                CSVHEADER: lambda: ['Run', 'Input Size', 'TIme of Execution (s) (Average)', 'TIme of Execution (s) (Best)', 'TIme of Execution (s) (Worst)'],
                 ARGS: lambda: [self._testCase, self._target],
                 CSVAPPEND: lambda: [*self._timeArray]
             },
         }
-
 
     def analyse(
         self,
@@ -44,7 +44,6 @@ class Analysis:
         for x in range(self._funcTypeDict.__len__()):
             print(str(x) + ' -> ' + self._funcTypeDict.get(x).get(NAME)())
 
-
         variables = self._funcTypeDict.get(int(input()))
        
         if csvSave:
@@ -54,7 +53,6 @@ class Analysis:
                     inp = input("Enter a valid input. (Y/N): ")
                 if inp == 'N':
                     csvSave = False
-
 
         if csvSave:
             while True:
@@ -66,7 +64,6 @@ class Analysis:
                     print("The file opened in exclusive creation mode ('x') already exists.")
                 except InterruptedError:
                     print("System call is interrupted by an incoming signal.")
-
 
         if algorithm.__name__ == 'linear_search':
             linear = True
@@ -95,9 +92,7 @@ class Analysis:
                     csvAppend.append(list[i])
                 csv.writer(open(csvPath, 'a', newline='')).writerow(csvAppend)
 
-
         generate_graph(lenArray, variables.get(CSVAPPEND)())
-
 
 def algo_average_time(algorithm: FunctionType, arguments) -> float:
     exec_time = []
@@ -108,23 +103,18 @@ def algo_average_time(algorithm: FunctionType, arguments) -> float:
         final_time = time()
         exec_time.append(final_time-intial_time)
 
-
     for et in exec_time:
         average_time += et
 
-
     return average_time/5
-
 
 def create_list(length: int, dataRange: list[int] = [0, 100]) -> list[int]:
     '''
     Create a list of random whole numbers less than 100 of length n.
 
-
     Parameters:
         length (int): The length of the list to be created.
         dataRange (list[int]): Range of data with index 0 as minimum value and index 1 as maximum value.
-
 
     Returns:
         list[int]: A list with random generated numbers.
@@ -137,11 +127,11 @@ def create_list(length: int, dataRange: list[int] = [0, 100]) -> list[int]:
 
 def generate_graph(lenarray: list, timeArray: list[list]):
     '''
-    Plot a graph from the given csv .FIle
-
+    Plot a graph from the given data arrays.
 
     Parameter:
-    csvFile (str): The system path to the file with input values.
+    lenarray: list[int]
+    timeArray: list[list[float]]
     '''
     # Extract x and y values from the data
     x_values = lenarray
@@ -152,7 +142,6 @@ def generate_graph(lenarray: list, timeArray: list[list]):
     except IndexError:
         pass        
 
-
     # Create a line plot
     plt.plot(x_values, y_values, label='Average Case', color='blue', marker='.')
     try:
@@ -161,16 +150,43 @@ def generate_graph(lenarray: list, timeArray: list[list]):
     except NameError:
         pass
 
-
     # Add labels and title
-    plt.xlabel('Length of Array')
-    plt.ylabel('Time of Execution')
+    plt.xlabel('Length of Array (n)')
+    plt.ylabel('Time of Execution (s)')
     plt.title('Execution TIme v/s Array Length')
-
 
     # Add gridlines
     plt.grid()
 
+    # Show the plot
+    plt.legend()
+    plt.show()
+
+def csv_to_graph(csvPath:str = 'results.csv'):
+    '''
+    Plot a graph from the given csv .FIle
+
+    Parameter:
+    csvFile (str): The system path to the file with input values.
+    '''
+    # Extract x and y values from the data
+    df = pd.read_csv(csvPath, skiprows=[0]) 
+
+    # Create a line plot
+    plt.plot(df.iloc[:, 1].values, df.iloc[:, 2].values, label='Average Case', color='blue', marker='.')
+    try:
+        plt.plot(df.iloc[:, 1].values, df.iloc[:, 3].values, label='Best Case', color='green', marker='.')
+        plt.plot(df.iloc[:, 1].values, df.iloc[:, 4].values, label='Worst Case', color='red', marker='.')
+    except IndexError:
+        pass
+
+    # Add labels and title
+    plt.xlabel('Length of Array (n)')
+    plt.ylabel('Time of Execution (s)')
+    plt.title('Execution TIme v/s Array Length')
+
+    # Add gridlines
+    plt.grid()
 
     # Show the plot
     plt.legend()
